@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Topic {
+  id            String         @id @default(uuid())
+  name          String
+  content       String
+  version       Int           @default(1)
+  parentTopicId String?       
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  resources     Resource[]
+  childTopics   Topic[]       @relation("TopicToTopic")
+  parentTopic   Topic?        @relation("TopicToTopic", fields: [parentTopicId], references: [id])
+  versions      TopicVersion[]
+
+  @@map("topics")
+}
+
+model TopicVersion {
+  id        String   @id @default(uuid())
+  topicId   String   
+  name      String
+  content   String
+  version   Int
+  createdAt DateTime @default(now()) 
+  topic     Topic    @relation(fields: [topicId], references: [id])
+
+  @@map("topic_versions")
+  @@unique([topicId, version])
+}
+
+model Resource {
+  id          String   @id @default(uuid())
+  topicId     String   
+  url         String
+  description String
+  type        String
+  createdAt   DateTime @default(now()) 
+  updatedAt   DateTime @updatedAt
+  topic       Topic    @relation(fields: [topicId], references: [id])
+
+  @@map("resources")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("viewer")
+  createdAt DateTime @default(now()) 
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
